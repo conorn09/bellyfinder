@@ -21,7 +21,16 @@ export default function Navbar() {
               <Link href="/browse" className="hover:text-[var(--accent)] transition">Browse</Link>
               <Link href="/creators" className="hover:text-[var(--accent)] transition">Creators</Link>
               <Link href="/categories" className="hover:text-[var(--accent)] transition">Categories</Link>
-              <span className="text-[var(--text-muted)]">Hi, {user.name.split(" ")[0]}</span>
+              {user.role === "creator" && (
+                <Link href="/dashboard" className="hover:text-[var(--accent)] transition">Dashboard</Link>
+              )}
+              {user.role === "user" && (
+                <Link href="/messages" className="hover:text-[var(--accent)] transition">Messages</Link>
+              )}
+              <span className="text-[var(--text-muted)] flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${user.role === "creator" ? "bg-[var(--accent)]" : "bg-purple-500"}`} />
+                {user.name.split(" ")[0]}
+              </span>
               <button
                 onClick={logout}
                 className="px-4 py-2 rounded-full border border-[var(--border)] hover:border-[var(--accent)] text-sm transition"
@@ -57,6 +66,12 @@ export default function Navbar() {
               <Link href="/browse" onClick={() => setMenuOpen(false)}>Browse</Link>
               <Link href="/creators" onClick={() => setMenuOpen(false)}>Creators</Link>
               <Link href="/categories" onClick={() => setMenuOpen(false)}>Categories</Link>
+              {user.role === "creator" && (
+                <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+              )}
+              {user.role === "user" && (
+                <Link href="/messages" onClick={() => setMenuOpen(false)}>Messages</Link>
+              )}
               <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left text-[var(--text-muted)]">Sign Out</button>
             </>
           ) : (

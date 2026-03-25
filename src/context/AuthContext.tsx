@@ -10,24 +10,41 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-interface User {
+export type UserRole = "creator" | "user";
+
+export interface User {
   uid: string;
   email: string;
   name: string;
+  role: UserRole;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  signup: (name: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string, role: UserRole) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function getStoredRole(uid: string): UserRole {
+  if (typeof window === "undefined") return "user";
+  return (localStorage.getItem(`bf_role_${uid}`) as UserRole) || "user";
+}
+
+function storeRole(uid: string, role: UserRole) {
+  localStorage.setItem(`bf_role_${uid}`, role);
+}
+
 function toUser(fb: FirebaseUser): User {
-  return { uid: fb.uid, email: fb.email ?? "", name: fb.displayName ?? "User" };
+  return {
+    uid: fb.uid,
+    email: fb.email ?? "",
+    name: fb.displayName ?? "User",
+    role: getStoredRole(fb.uid),
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -53,11 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, role: UserRole) => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
-      setUser(toUser({ ...cred.user, displayName: name }));
+      storeRole(cred.user.uid, role);
+      const u: User = { uid: cred.user.uid, email, name, role };
+      setUser(u);
       return { ok: true };
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Signup failed";
